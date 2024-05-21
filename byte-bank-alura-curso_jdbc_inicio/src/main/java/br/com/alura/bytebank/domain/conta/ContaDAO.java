@@ -37,19 +37,23 @@ public class ContaDAO {
             preparedStatement.setString(5, cliente.getEmail());
 
             preparedStatement.execute();
+            preparedStatement.close();
+            conn.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public Set<Conta> listar() {
+        PreparedStatement ps;
+        ResultSet resultSet;
         Set<Conta> contas = new HashSet<>();
 
         String sql = "SELECT * FROM conta";
 
         try {
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet resultSet = ps.executeQuery();
+            ps = conn.prepareStatement(sql);
+            resultSet = ps.executeQuery();
 
             while (resultSet.next()) {
                 Integer numeroDaConta = resultSet.getInt(1);
@@ -62,9 +66,43 @@ public class ContaDAO {
                 contas.add(
                         new Conta(numeroDaConta, cliente));
             }
+            resultSet.close();
+            ps.close();
+            conn.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
         return contas;
+    }
+
+    public Conta listarPorNumero(Integer numero) {
+        PreparedStatement ps;
+        ResultSet resultSet;
+        Conta conta = null;
+
+        String sql = "SELECT * FROM conta WHERE numero = ?";
+
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, numero);
+            resultSet = ps.executeQuery();
+
+            while (resultSet.next()) {
+                Integer numeroConta = resultSet.getInt(1);
+                BigDecimal saldo = resultSet.getBigDecimal(2);
+                String nome = resultSet.getString(3);
+                String cpf = resultSet.getString(4);
+                String email = resultSet.getString(5);
+                DadosCadastroCliente dadosCadastroCliente = new DadosCadastroCliente(nome, cpf, email);
+                Cliente cliente = new Cliente(dadosCadastroCliente);
+                conta = new Conta(numeroConta, cliente);
+            }
+            resultSet.close();
+            ps.close();
+            conn.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return conta;
     }
 }
